@@ -123,6 +123,13 @@ func (l *lexer) emit(t itemType, trimSpaces bool) {
 		input = strings.TrimSpace(input)
 	}
 
+	// Whitespace between a string value's closing `"` and the `;` is not part of the value.
+	if t == itemOptionValueString {
+		if s := strings.TrimRightFunc(input, unicode.IsSpace); strings.HasSuffix(s, `"`) {
+			input = s
+		}
+	}
+
 	// This is a bit of a hack. We lex until `;` now so we end up with extra `"`.
 	input = strings.TrimSuffix(input, `"`)
 	l.items <- item{t, input}

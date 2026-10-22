@@ -96,6 +96,24 @@ func TestLexer(t *testing.T) {
 			},
 		},
 		{
+			name:  "string value space before semicolon",
+			input: `alert udp $HOME_NET any -> $EXTERNAL_NET any (key1:" value1 " ; key2:"value2"	;)`,
+			items: []item{
+				{itemAction, "alert"},
+				{itemProtocol, "udp"},
+				{itemSourceAddress, "$HOME_NET"},
+				{itemSourcePort, "any"},
+				{itemDirection, "->"},
+				{itemDestinationAddress, "$EXTERNAL_NET"},
+				{itemDestinationPort, "any"},
+				{itemOptionKey, "key1"},
+				{itemOptionValueString, " value1 "},
+				{itemOptionKey, "key2"},
+				{itemOptionValueString, "value2"},
+				{itemEOR, ""},
+			},
+		},
+		{
 			name:  "protocol with number",
 			input: `alert ipv6 $HOME_NET any -> $EXTERNAL_NET any (key1:"value1";)`,
 			items: []item{
