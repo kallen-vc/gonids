@@ -300,6 +300,17 @@ const (
 	http2HeaderValue
 	// Open-ended Frame Sticky Buffer
 	framePos
+	// File Sticky Buffers
+	fileName
+	// MQTT Sticky Buffers
+	mqttConnectUsername
+	mqttConnectPassword
+	mqttPublishTopic
+	mqttPublishMessage
+	// WebSocket Sticky Buffers
+	websocketPayload
+	// SMTP Sticky Buffers
+	smtpRcptTo
 )
 
 // Contains both Suricata 4.x and 5.0 buffers. Some day we'll deprecate the 4.x ones.
@@ -439,6 +450,17 @@ var stickyBuffers = map[DataPos]string{
 	http2HeaderValue: "http2.header_value",
 	// Open-ended Frame Sticky Buffer
 	framePos: "frame",
+	// File Sticky Buffers
+	fileName: "file.name",
+	// MQTT Sticky Buffers
+	mqttConnectUsername: "mqtt.connect.username",
+	mqttConnectPassword: "mqtt.connect.password",
+	mqttPublishTopic:    "mqtt.publish.topic",
+	mqttPublishMessage:  "mqtt.publish.message",
+	// WebSocket Sticky Buffers
+	websocketPayload: "websocket.payload",
+	// SMTP Sticky Buffers
+	smtpRcptTo: "smtp.rcpt_to",
 
 	// SMB - Documentation lacking. Unknown.
 }

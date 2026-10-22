@@ -4605,6 +4605,36 @@ func TestParseSuri8StickyBuffers(t *testing.T) {
 	}
 }
 
+func TestParseFileMQTTWebSocketSMTPStickyBuffers(t *testing.T) {
+	buffers := []string{
+		"file.name",
+		"mqtt.connect.username",
+		"mqtt.connect.password",
+		"mqtt.publish.topic",
+		"mqtt.publish.message",
+		"websocket.payload",
+		"smtp.rcpt_to",
+	}
+	for _, buf := range buffers {
+		t.Run(buf, func(t *testing.T) {
+			ruleStr := `alert ip any any -> any any (msg:"test ` + buf + `"; ` + buf + `; content:"test"; sid:1; rev:1;)`
+			got, err := ParseRule(ruleStr)
+			if err != nil {
+				t.Fatalf("ParseRule(%q) unexpected error: %v", ruleStr, err)
+			}
+			if len(got.Contents()) != 1 {
+				t.Fatalf("got %d contents; want 1", len(got.Contents()))
+			}
+			if gotBuf := got.Contents()[0].DataPosition.String(); gotBuf != buf {
+				t.Errorf("got DataPosition.String() = %q; want %q", gotBuf, buf)
+			}
+			if gotStr := got.String(); gotStr != ruleStr {
+				t.Errorf("got.String() = %q; want %q", gotStr, ruleStr)
+			}
+		})
+	}
+}
+
 func TestParseRequires(t *testing.T) {
 	for _, tt := range []struct {
 		name     string
