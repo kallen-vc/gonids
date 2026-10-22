@@ -990,6 +990,37 @@ func TestParseRule(t *testing.T) {
 			},
 		},
 		{
+			name: "space between string value and semicolon",
+			rule: `alert http any any -> any any (msg:"test space" ; flow:to_server; http.uri; content:"/admin" ; pcre:"/admin/i" ; sid:7; rev:1;)`,
+			want: &Rule{
+				Action:   "alert",
+				Protocol: "http",
+				Source: Network{
+					Nets:  []string{"any"},
+					Ports: []string{"any"},
+				},
+				Destination: Network{
+					Nets:  []string{"any"},
+					Ports: []string{"any"},
+				},
+				SID:         7,
+				Revision:    1,
+				Description: "test space",
+				Tags:        map[string]string{"flow": "to_server"},
+				Matchers: []orderedMatcher{
+					&Content{
+						DataPosition: httpURI,
+						Pattern:      []byte("/admin"),
+					},
+					&PCRE{
+						DataPosition: httpURI,
+						Pattern:      []byte("admin"),
+						Options:      []byte("i"),
+					},
+				},
+			},
+		},
+		{
 			name: "test ike",
 			rule: `alert ike $HOME_NET any -> $EXTERNAL_NET any (msg:"test ike"; sid:2; rev:1;)`,
 			want: &Rule{
