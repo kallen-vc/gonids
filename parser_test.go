@@ -3330,6 +3330,63 @@ func TestParseRule(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "unquoted pcre",
+			rule: `alert udp $HOME_NET any -> $EXTERNAL_NET any (msg:"foo"; content:"AA"; pcre:/filename=".*\.php"/i ; sid:1337; rev:1;)`,
+			want: &Rule{
+				Action:   "alert",
+				Protocol: "udp",
+				Source: Network{
+					Nets:  []string{"$HOME_NET"},
+					Ports: []string{"any"},
+				},
+				Destination: Network{
+					Nets:  []string{"$EXTERNAL_NET"},
+					Ports: []string{"any"},
+				},
+				SID:         1337,
+				Revision:    1,
+				Description: "foo",
+				Matchers: []orderedMatcher{
+					&Content{
+						Pattern: []byte("AA"),
+					},
+					&PCRE{
+						Pattern: []byte(`filename=".*\.php"`),
+						Options: []byte("i"),
+					},
+				},
+			},
+		},
+		{
+			name: "negated unquoted pcre with escaped semicolon",
+			rule: `alert udp $HOME_NET any -> $EXTERNAL_NET any (msg:"foo"; content:"AA"; pcre:!/a\;b/R; sid:1337; rev:1;)`,
+			want: &Rule{
+				Action:   "alert",
+				Protocol: "udp",
+				Source: Network{
+					Nets:  []string{"$HOME_NET"},
+					Ports: []string{"any"},
+				},
+				Destination: Network{
+					Nets:  []string{"$EXTERNAL_NET"},
+					Ports: []string{"any"},
+				},
+				SID:         1337,
+				Revision:    1,
+				Description: "foo",
+				Matchers: []orderedMatcher{
+					&Content{
+						Pattern: []byte("AA"),
+					},
+					&PCRE{
+						Pattern: []byte(`a\;b`),
+						Options: []byte("R"),
+						Negate:  true,
+					},
+				},
+			},
+		},
+		{
 			name:    "invalid action",
 			rule:    `alertt udp $HOME_NET any -> $EXTERNAL_NET any (sid:1337; msg:"foo"; content:"AA"; rev:2;)`,
 			wantErr: true,
@@ -5158,6 +5215,42 @@ func TestParseDirectionalStickyBuffers(t *testing.T) {
 				if gotStr := got.String(); gotStr != tt.rule {
 					t.Errorf("got.String() = %q; want %q", gotStr, tt.rule)
 				}
+			}
+		})
+	}
+}
+
+func TestParseUnquotedPCREMatchesQuoted(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		unquoted string
+		quoted   string
+	}{
+		{
+			name:     "quotes in pattern",
+			unquoted: `alert http any any -> any any (msg:"foo"; http.request_body; pcre:/filename=".*\.php"/i ; sid:1; rev:1;)`,
+			quoted:   `alert http any any -> any any (msg:"foo"; http.request_body; pcre:"/filename=\".*\.php\"/i"; sid:1; rev:1;)`,
+		},
+		{
+			name:     "negated",
+			unquoted: `alert http any any -> any any (msg:"foo"; pcre:!/admin/U; sid:1; rev:1;)`,
+			quoted:   `alert http any any -> any any (msg:"foo"; pcre:!"/admin/U"; sid:1; rev:1;)`,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			unquoted, err := ParseRule(tt.unquoted)
+			if err != nil {
+				t.Fatalf("ParseRule(%q) unexpected error: %v", tt.unquoted, err)
+			}
+			quoted, err := ParseRule(tt.quoted)
+			if err != nil {
+				t.Fatalf("ParseRule(%q) unexpected error: %v", tt.quoted, err)
+			}
+			if diff := pretty.Compare(unquoted, quoted); diff != "" {
+				t.Errorf("diff (-unquoted +quoted):\n%s", diff)
+			}
+			if got := unquoted.String(); got != tt.quoted {
+				t.Errorf("String() = %q; want %q", got, tt.quoted)
 			}
 		})
 	}

@@ -455,6 +455,11 @@ func lexOptionValue(l *lexer) stateFn {
 			l.emit(itemOptionValue, true)
 			l.skipNext()
 			return lexOptionKey
+		case '\\':
+			// An escaped `;` does not end the value.
+			if l.next() != ';' {
+				l.backup()
+			}
 		case eof:
 			return l.unexpectedEOF()
 		}
