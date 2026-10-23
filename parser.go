@@ -1108,10 +1108,16 @@ func (r *Rule) option(key item, l *lexer, st *parseState) error {
 		metas := metaSplitRE.Split(nextItem.value, -1)
 		for _, kv := range metas {
 			metaTmp := strings.SplitN(kv, " ", 2)
-			if len(metaTmp) != 2 {
+			key := strings.TrimSpace(metaTmp[0])
+			if key == "" {
 				return fmt.Errorf("invalid metadata definition: %s", metaTmp)
 			}
-			r.Metas = append(r.Metas, &Metadata{Key: strings.TrimSpace(metaTmp[0]), Value: strings.TrimSpace(metaTmp[1])})
+			// Suricata accepts a key without a value (and ignores it), so keep it with an empty Value.
+			var value string
+			if len(metaTmp) == 2 {
+				value = strings.TrimSpace(metaTmp[1])
+			}
+			r.Metas = append(r.Metas, &Metadata{Key: key, Value: value})
 		}
 	case key.value == "sid":
 		nextItem := l.nextItem()

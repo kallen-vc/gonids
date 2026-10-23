@@ -157,3 +157,14 @@ func (r *Rule) OnlyShortContents() bool {
 	}
 	return true
 }
+
+// MetadataWithoutValue returns true if any metadata key has no value.
+// Suricata loads such rules but silently drops the key, so it never appears in alert output.
+func (r *Rule) MetadataWithoutValue() bool {
+	for _, m := range r.Metas {
+		if m.Value == "" {
+			return true
+		}
+	}
+	return false
+}

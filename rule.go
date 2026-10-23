@@ -1385,11 +1385,15 @@ func (ms Metadatas) String() string {
 	}
 	fmt.Fprintf(&s, "metadata:")
 	for i, m := range ms {
+		s.WriteString(m.Key)
+		if m.Value != "" {
+			fmt.Fprintf(&s, " %s", m.Value)
+		}
 		if i < len(ms)-1 {
-			fmt.Fprintf(&s, "%s %s, ", m.Key, m.Value)
+			s.WriteString(", ")
 			continue
 		}
-		fmt.Fprintf(&s, "%s %s;", m.Key, m.Value)
+		s.WriteString(";")
 	}
 	return s.String()
 }
