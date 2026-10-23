@@ -1275,20 +1275,26 @@ func (r *Rule) option(key item, l *lexer, st *parseState) error {
 			nextItem = l.nextItem()
 			negate = true
 		}
-		if nextItem.typ == itemOptionValueString {
-			p, err := parsePCRE(unquote(nextItem.value))
-			if err != nil {
-				return err
-			}
-			p.DataPosition = st.dataPosition
-			p.FrameName = st.frameName
-			p.DataDirection = st.dataDirection
-			p.Negate = negate
-			p.Transforms = st.cloneTransforms()
-			r.Matchers = append(r.Matchers, p)
-		} else {
-			return fmt.Errorf("invalid type %q for option content", nextItem.typ)
+		var value string
+		switch nextItem.typ {
+		case itemOptionValueString:
+			value = unquote(nextItem.value)
+		case itemOptionValue:
+			// Suricata also accepts an unquoted pcre, e.g. pcre:/foo"bar/i; and uses it as is.
+			value = nextItem.value
+		default:
+			return fmt.Errorf("invalid type %q for option pcre", nextItem.typ)
 		}
+		p, err := parsePCRE(value)
+		if err != nil {
+			return err
+		}
+		p.DataPosition = st.dataPosition
+		p.FrameName = st.frameName
+		p.DataDirection = st.dataDirection
+		p.Negate = negate
+		p.Transforms = st.cloneTransforms()
+		r.Matchers = append(r.Matchers, p)
 	case inSlice(key.value, allbyteMatchTypeNames()):
 		k, err := byteMatcher(key.value)
 		if err != nil {
