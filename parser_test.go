@@ -3297,6 +3297,39 @@ func TestParseRule(t *testing.T) {
 		},
 		// Errors
 		{
+			name: "metadata key without value",
+			rule: `alert udp $HOME_NET any -> $EXTERNAL_NET any (msg:"foo"; content:"AA"; metadata: deployment Datacenter, variant; sid:1337; rev:1;)`,
+			want: &Rule{
+				Action:   "alert",
+				Protocol: "udp",
+				Source: Network{
+					Nets:  []string{"$HOME_NET"},
+					Ports: []string{"any"},
+				},
+				Destination: Network{
+					Nets:  []string{"$EXTERNAL_NET"},
+					Ports: []string{"any"},
+				},
+				SID:         1337,
+				Revision:    1,
+				Description: "foo",
+				Metas: Metadatas{
+					&Metadata{Key: "deployment", Value: "Datacenter"},
+					&Metadata{Key: "variant", Value: ""},
+				},
+				Matchers: []orderedMatcher{
+					&Content{
+						Pattern: []byte("AA"),
+					},
+				},
+			},
+		},
+		{
+			name:    "metadata empty entry",
+			rule:    `alert udp $HOME_NET any -> $EXTERNAL_NET any (msg:"foo"; content:"AA"; metadata: deployment Datacenter, ; sid:1337; rev:1;)`,
+			wantErr: true,
+		},
+		{
 			name:    "invalid action",
 			rule:    `alertt udp $HOME_NET any -> $EXTERNAL_NET any (sid:1337; msg:"foo"; content:"AA"; rev:2;)`,
 			wantErr: true,
@@ -4106,6 +4139,10 @@ func TestInEqualOut(t *testing.T) {
 		{
 			name:  "complex rule",
 			input: `alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"FOO BAR BLAH"; flow:established,from_server; content:"200"; http_stat_code; file_data; content:"|3d 21 2d 2f|eyJjWEEEEEE"; fast_pattern; content:"|3z 21 2f 2d|"; pcre:"/^(?:[A-Z0-9+/]{1})*(?:[A-Z0-9+/]{1}==|[A-Z0-9+/]{7}=|[A-Z0-9+/]{9})/R"; metadata: former_category BOO; reference:url,this.is.sparta.com/fooblog; classtype:trojan-activity; sid:1111111; rev:1; metadata:affected_product Windows_XP_Vista_7_8_10_Server_32_64_Bit, attack_target Client_Endpoint, deployment Perimeter, tag FOOO, signature_severity Major, created_at 2018_06_25, performance_impact Low, updated_at 2018_09_23;)`,
+		},
+		{
+			name:  "metadata keys without values",
+			input: `alert udp $HOME_NET any -> $EXTERNAL_NET any (msg:"foo"; content:"AA"; metadata:variant, deployment Datacenter, other; sid:1337; rev:1;)`,
 		},
 	} {
 		first, err := ParseRule(tt.input)

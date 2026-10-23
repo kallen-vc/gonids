@@ -283,6 +283,32 @@ func TestMetdatasString(t *testing.T) {
 			},
 			want: "metadata:created_at 2019_01_01, updated_at 2019_01_07, target Windows;",
 		},
+		{
+			name: "key without value",
+			input: Metadatas{
+				&Metadata{
+					Key: "variant",
+				},
+			},
+			want: "metadata:variant;",
+		},
+		{
+			name: "key without value between pairs",
+			input: Metadatas{
+				&Metadata{
+					Key:   "deployment",
+					Value: "Datacenter",
+				},
+				&Metadata{
+					Key: "variant",
+				},
+				&Metadata{
+					Key:   "target",
+					Value: "Windows",
+				},
+			},
+			want: "metadata:deployment Datacenter, variant, target Windows;",
+		},
 	} {
 		got := tt.input.String()
 		if got != tt.want {

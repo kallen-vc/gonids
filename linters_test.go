@@ -496,3 +496,42 @@ func TestOnlyShortContents(t *testing.T) {
 		}
 	}
 }
+
+func TestMetadataWithoutValue(t *testing.T) {
+	for _, tt := range []struct {
+		name  string
+		input *Rule
+		want  bool
+	}{
+		{
+			name:  "no metadata",
+			input: &Rule{},
+			want:  false,
+		},
+		{
+			name: "all keys have values",
+			input: &Rule{
+				Metas: Metadatas{
+					{Key: "deployment", Value: "Datacenter"},
+					{Key: "impact", Value: "successful-exploitation"},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "key without value",
+			input: &Rule{
+				Metas: Metadatas{
+					{Key: "deployment", Value: "Datacenter"},
+					{Key: "variant"},
+				},
+			},
+			want: true,
+		},
+	} {
+		got := tt.input.MetadataWithoutValue()
+		if got != tt.want {
+			t.Fatalf("%s: got %v; want %v", tt.name, got, tt.want)
+		}
+	}
+}
